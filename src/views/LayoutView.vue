@@ -11,10 +11,11 @@ export default {
     ZoomSlider: () => import("@/components/ZoomSlider"),
     OverviewMap: () => import("@/components/OverviewMap"),
     MapOperate: () => import("@/components/MapOperate"),
+    MapClick: () => import("@/components/MapClick"),
   },
   data() {
     return {
-      isCOM: "MapOperate",
+      isCOM: "MapClick",
     };
   },
 };

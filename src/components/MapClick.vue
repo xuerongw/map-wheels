@@ -1,24 +1,25 @@
 <template>
   <!-- 地图操作 -->
   <div class="box">
-    <button @click="scaleDown">缩小</button>
-    <button @click="scaleLarge">放大</button>
-    <button @click="move">平移</button>
-    <button @click="reset">复位</button>
     <div id="map" ref="map" class="map"></div>
   </div>
 </template>
 
 <script>
 import "ol/ol.css";
-import { Map, View } from "ol";
+import { Map, View, Feature } from "ol";
 import TileLayer from "ol/layer/Tile";
+import { Vector as VectorLayer } from "ol/layer";
+import { Vector as VectorSource } from "ol/source";
 import { XYZ } from "ol/source";
+import { Style, Icon } from "ol/style";
+import { Point } from "ol/geom";
 export default {
-  name: "MapOperate",
+  name: "MapClick",
   data() {
     return {
       mapData: null,
+      iconLayer: null,
     };
   },
   mounted() {
@@ -58,35 +59,47 @@ export default {
           minZoom: 1,
         }),
       });
-
       this.mapData = map;
+      map.on("click", (evt) => this.mapClick(evt));
     },
-    scaleDown() {
-      let view = this.mapData.getView();
-      let zoom = view.getZoom();
-
-      view.setZoom(zoom - 1);
+    mapClick(evt) {
+      this.clickCenter = evt.coordinate; // 获取点击的中心点
+      if (evt.coordinate) {
+        this.$emit("clickData", evt.coordinate);
+      }
+      this.removeIcon();
+      // 创建矢量容器
+      const vectorSource = new VectorSource({});
+      // 创建图标特性
+      const iconFeature = new Feature({
+        type: "icon",
+        name: "mapIconMark",
+        geometry: new Point(evt.coordinate),
+      });
+      // 图标特性添加到矢量容器
+      vectorSource.addFeature(iconFeature);
+      // 创建矢量层
+      this.iconLayer = new VectorLayer({
+        className: "map-icon-mark",
+        source: vectorSource,
+        zIndex: 100000,
+        // 创建图标样式
+        style: new Style({
+          image: new Icon({
+            src: require("@/assets/images/location.png"),
+            scale: 0.1,
+          }),
+        }),
+      });
+      this.mapData.addLayer(this.iconLayer);
     },
-    scaleLarge() {
-      let view = this.mapData.getView();
-      let zoom = view.getZoom();
-      view.setZoom(zoom + 1);
-    },
-    move() {
-      //获取地图视图
-      var view = this.mapData.getView();
-      var center = [117.78632651009572, 26.402552458339866];
-      //平移地图
-      view.setCenter(center);
-      view.setZoom(10);
-    },
-    reset() {
-      //获取地图视图
-      var view = this.mapData.getView();
-      var center = [117.49909311532974, 26.051648408174515];
-      //平移地图
-      view.setCenter(center);
-      view.setZoom(5);
+    // 取消图标
+    removeIcon() {
+      if (this.iconLayer) {
+        // 移除图层
+        this.mapData.removeLayer(this.iconLayer);
+        this.iconLayer = null;
+      }
     },
   },
 };
